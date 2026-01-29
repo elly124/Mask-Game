@@ -1,23 +1,43 @@
 <script setup>
+// Importa funções reativas e ciclo de vida do Vue
 import { ref, reactive, onMounted } from 'vue'
+
+// Importa o CSS do componente
 import './style.css'
 
+/**
+ * Lista de ícones (máscaras) representando estados do Nordeste
+ * Cada item possui um nome e o caminho da imagem
+ */
 const icones = [
-  { nome: 'Maranhão', img: new URL('./assets/Maranhão.png', import.meta.url).href },
-  { nome: 'Piauí', img: new URL('./assets/Piaui.png', import.meta.url).href },
-  { nome: 'Ceará', img: new URL('./assets/Ceara.png', import.meta.url).href },
-  { nome: 'Rio Grande do Norte', img: new URL('./assets/rio_grande.png', import.meta.url).href },
-  { nome: 'Paraíba', img: new URL('./assets/Paraiba.png', import.meta.url).href },
-  { nome: 'Pernambuco', img: new URL('./assets/Pernambuco.png', import.meta.url).href },
-  { nome: 'Alagoas', img: new URL('./assets/Alagoas.png', import.meta.url).href },
-  { nome: 'Sergipe', img: new URL('./assets/sergipe.png', import.meta.url).href },
-  { nome: 'Bahia', img: new URL('./assets/Bahia.png', import.meta.url).href },
+  { nome: 'Maranhão', img: new URL('/Maranhao.png', import.meta.url).href },
+  { nome: 'Piauí', img: new URL('/Piaui.png', import.meta.url).href },
+  { nome: 'Ceará', img: new URL('/Ceara.png', import.meta.url).href },
+  { nome: 'Rio Grande do Norte', img: new URL('/Rio_Grande.png', import.meta.url).href },
+  { nome: 'Paraíba', img: new URL('/Paraiba.png', import.meta.url).href },
+  { nome: 'Pernambuco', img: new URL('/Pernambuco.png', import.meta.url).href },
+  { nome: 'Alagoas', img: new URL('/Alagoas.png', import.meta.url).href },
+  { nome: 'Sergipe', img: new URL('/sergipe.png', import.meta.url).href },
+  { nome: 'Bahia', img: new URL('/Bahia.png', import.meta.url).href },
 ]
 
+/**
+ * Escolhe aleatoriamente um ícone para ser a "máscara mutante"
+ */
 const iconeMutante = icones[Math.floor(Math.random() * icones.length)]
+
+// Indica se o jogo foi ganho
 const jogoGanho = ref(false)
+
+// Armazena os índices das cartas escolhidas na rodada atual
 const escolhas = ref([])
 
+/**
+ * Criação das cartas do jogo:
+ * - Duplica os ícones
+ * - Define propriedades de controle
+ * - Embaralha as cartas
+ */
 const cartas = reactive(
   [...icones, ...icones]
     .map((estado, i) => ({
@@ -30,13 +50,20 @@ const cartas = reactive(
     .sort(() => Math.random() - 0.5)
 )
 
+/**
+ * Função chamada ao clicar em uma carta
+ */
 const virarCarta = (index) => {
   const carta = cartas[index]
+
+  // Impede virar cartas inválidas
   if (carta.estaVirada || carta.foiEncontrada || escolhas.value.length === 2) return
 
+  // Vira a carta e registra a escolha
   carta.estaVirada = true
   escolhas.value.push(index)
 
+  // Se for carta mutante e for a primeira escolha
   if (carta.tipo === 'mutante' && escolhas.value.length === 1) {
     setTimeout(() => {
       aplicarEfeitoMutante()
@@ -46,11 +73,15 @@ const virarCarta = (index) => {
     return
   }
 
+  // Se duas cartas foram escolhidas, verifica o par
   if (escolhas.value.length === 2) {
     checarPar()
   }
 }
 
+/**
+ * Verifica se as duas cartas escolhidas formam um par
+ */
 const checarPar = () => {
   const [i1, i2] = escolhas.value
 
@@ -68,6 +99,10 @@ const checarPar = () => {
   }
 }
 
+/**
+ * Aplica o efeito da máscara mutante:
+ * embaralha as identidades das cartas não encontradas
+ */
 const aplicarEfeitoMutante = () => {
   const indicesDisponiveis = cartas
     .map((c, i) => (!c.foiEncontrada && !c.estaVirada ? i : null))
@@ -84,12 +119,18 @@ const aplicarEfeitoMutante = () => {
   alert(`A Máscara de ${iconeMutante.nome} bagunçou as identidades!`)
 }
 
+/**
+ * Verifica se todas as cartas foram encontradas
+ */
 const verificarVitoria = () => {
   if (cartas.every(carta => carta.foiEncontrada)) {
     jogoGanho.value = true
   }
 }
 
+/**
+ * Reinicia o jogo recarregando a página
+ */
 const reiniciarJogo = () => {
   window.location.reload()
 }
@@ -97,9 +138,13 @@ const reiniciarJogo = () => {
 
 <template>
   <main>
+    <!-- Título do jogo -->
     <h1>Máscaras do Nordeste 🎭</h1>
+
+    <!-- Informação da máscara mutante -->
     <p>Cuidado com a máscara mutante: <strong>{{ iconeMutante.nome }}</strong></p>
 
+    <!-- Tela de vitória -->
     <div v-if="jogoGanho" class="vitoria-overlay">
       <div class="vitoria-card">
         <h2>Parabéns!</h2>
@@ -108,6 +153,7 @@ const reiniciarJogo = () => {
       </div>
     </div>
 
+    <!-- Tabuleiro do jogo -->
     <div class="tabuleiro">
       <div 
         v-for="(carta, index) in cartas" 
@@ -119,11 +165,13 @@ const reiniciarJogo = () => {
         }"
         @click="virarCarta(index)"
       >
+        <!-- Frente da carta -->
         <template v-if="carta.estaVirada || carta.foiEncontrada">
           <img :src="carta.valor.img" :alt="carta.valor.nome" class="img-mask" />
           <span>{{ carta.valor.nome }}</span>
         </template>
         
+        <!-- Verso da carta -->
         <template v-else>
           <div class="verso">?</div>
         </template>
@@ -131,4 +179,3 @@ const reiniciarJogo = () => {
     </div>
   </main>
 </template>
-
